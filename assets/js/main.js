@@ -27,41 +27,60 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 //Section news
-function caricaNews() {
-  fetch("https://hacker-news.firebaseio.com/v0/newstories.json")
-    .then(risposta => risposta.json())
-    .then(listaID => {
-      const primiDieci = listaID.slice(0, 10);
 
-      const richieste = primiDieci.map(id => {
-        const url = `https://hacker-news.firebaseio.com/v0/item/${id}.json`;
-        return fetch(url).then(r => r.json());
-      });
+// 🔢 Variabili globali
+let listaID = [];
+let indiceCorrente = 0;
+const notiziePerPagina = 10;
 
-      Promise.all(richieste)
-        .then(news => {
-          const contenitore = document.getElementById("news-container");
+// Funzione che carica e mostra le notizie
+function mostraNotizie() {
+  const contenitore = document.getElementById("news-container");
+  contenitore.innerHTML = ""; // 🔄 Svuota le notizie precedenti
 
-          news.forEach(n => {
-            // Evita elementi vuoti o nulli
-            if (!n || !n.title || !n.url) return;
+  const successivi = listaID.slice(indiceCorrente, indiceCorrente + notiziePerPagina);
 
-            const blocco = document.createElement("div");
-            blocco.className = "bg-gray-800 p-4 rounded shadow w-[60vw] mx-auto";
+  const richieste = successivi.map(id => {
+    const url = `https://hacker-news.firebaseio.com/v0/item/${id}.json`;
+    return fetch(url).then(r => r.json());
+  });
 
-            blocco.innerHTML = `
-              <a href="${n.url}" target="_blank" class="text-xl font-semibold text-purple-500 hover:underline">${n.title}</a>
-              <p class="text-sm text-gray-400 mt-2">🕒 ${new Date(n.time * 1000).toLocaleString()}</p>
-            `;
+  Promise.all(richieste).then(news => {
+    news.forEach(n => {
+      if (!n || !n.title || !n.url) return;
 
-            contenitore.appendChild(blocco);
-          });
-        })
-        .catch(err => {
-          console.error("❌ Errore nel recupero delle notizie:", err);
-        });
+      const blocco = document.createElement("div");
+      blocco.className = "bg-gray-800 p-4 rounded shadow w-[60vw] mx-auto";
+
+      blocco.innerHTML = `
+        <a href="${n.url}" target="_blank" class="text-xl font-semibold text-purple-500 hover:underline">
+          ${n.title}
+        </a>
+        <p class="text-sm text-gray-400 mt-2">
+          🕒 ${new Date(n.time * 1000).toLocaleString()}
+        </p>
+      `;
+
+      contenitore.appendChild(blocco);
     });
+
+    // 🔁 Incrementa l'indice per il prossimo clic
+    indiceCorrente += notiziePerPagina;
+
+    // 🚫 Nascondi il pulsante se le notizie sono finite
+    if (indiceCorrente >= listaID.length) {
+      document.getElementById("loadMore").style.display = "none";
+    }
+  });
 }
 
-// Chiamata alla funzione
-caricaNews();
+// 👇 Evento al pulsante
+document.getElementById("loadMore").addEventListener("click", mostraNotizie);
+
+// 🚀 Al primo avvio, prendi la lista degli ID
+fetch("https://hacker-news.firebaseio.com/v0/newstories.json")
+  .then(r => r.json())
+  .then(ids => {
+    listaID = ids;
+    mostraNotizie(); // Carica le prime 10 notizie
+  });
