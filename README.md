@@ -18,5 +18,3 @@ L'obiettivo? Costruire una web app che mostra le notizie più fresche del mondo 
 - 🎨 **Tailwind CSS 4**
 - 🎆 **particles.js** (per un tocco nerd visivo)
 - 📡 **API REST** di Hacker News
-
-## 📁 Struttura del progetto
